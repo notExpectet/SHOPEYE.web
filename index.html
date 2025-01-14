@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ShopEye</title>
+  <style>
+    body {
+      background-color: #070B1B;
+      color: #D1D6F2;
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 20px;
+      line-height: 1.6;
+    }
+
+    h1 {
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 18px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    thead tr {
+      background-color: #2542D0;
+      color: #D1D6F2;
+      font-weight: bold;
+    }
+
+    th, td {
+      padding: 12px 15px;
+      text-align: left;
+    }
+
+    tbody tr {
+      background-color: #09122A;
+      border-bottom: 1px solid #2542D0;
+    }
+
+    tbody tr:hover {
+      background-color: #2542D0;
+      color: #D1D6F2;
+    }
+
+    input[type="text"], input[type="number"] {
+      width: calc(50% - 20px);
+      padding: 10px;
+      margin: 10px 5px;
+      border: 2px solid #2542D0;
+      border-radius: 8px;
+      background-color: #09122A;
+      color: #D1D6F2;
+      font-size: 16px;
+    }
+
+    .button {
+      background-color: #2542D0;
+      color: #D1D6F2;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      font-weight: bold;
+      margin: 10px 5px;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .button:hover {
+      background-color: #1E35A8;
+    }
+
+    .form-container {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>ShopEye Offers</h1>
+    <div class="search-container">
+      <input type="text" id="searchInput" placeholder="Search for offers..." onkeyup="searchTable()">
+    </div>
+    <table id="offersTable">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Item Name</th>
+          <th>Seller</th>
+          <th>Price</th>
+          <th>Location</th>
+          <th>Coordinates</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td>Diamond</td>
+          <td>Alex</td>
+          <td>500</td>
+          <td>Spawn</td>
+          <td>(0, 64, 0)</td>
+          <td><button class="button" onclick="deleteOffer(this)">Delete</button></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="form-container">
+      <input type="text" id="itemName" placeholder="Item Name">
+      <input type="text" id="sellerName" placeholder="Seller Name">
+      <input type="number" id="price" placeholder="Price">
+      <input type="text" id="location" placeholder="Location">
+      <input type="text" id="coordinates" placeholder="Coordinates">
+      <button class="button" onclick="addOffer()">Add Offer</button>
+    </div>
+  </div>
+
+  <script>
+    let offerId = 2; // Start ID for new offers
+
+    function searchTable() {
+      const input = document.getElementById('searchInput');
+      const filter = input.value.toLowerCase();
+      const table = document.getElementById('offersTable');
+      const rows = table.getElementsByTagName('tr');
+
+      for (let i = 1; i < rows.length; i++) {
+        let cells = rows[i].getElementsByTagName('td');
+        let match = false;
+        for (let j = 0; j < cells.length - 1; j++) { // Exclude 'Action' column
+          if (cells[j].innerText.toLowerCase().includes(filter)) {
+            match = true;
+            break;
+          }
+        }
+        rows[i].style.display = match ? '' : 'none';
+      }
+    }
+
+    function addOffer() {
+      const itemName = document.getElementById('itemName').value;
+      const sellerName = document.getElementById('sellerName').value;
+      const price = document.getElementById('price').value;
+      const location = document.getElementById('location').value;
+      const coordinates = document.getElementById('coordinates').value;
+
+      if (!itemName || !sellerName || !price || !location || !coordinates) {
+        alert("Please fill out all fields.");
+        return;
+      }
+
+      const table = document.getElementById('offersTable').getElementsByTagName('tbody')[0];
+      const newRow = table.insertRow();
+
+      newRow.innerHTML = `
+        <td>${offerId++}</td>
+        <td>${itemName}</td>
+        <td>${sellerName}</td>
+        <td>${price}</td>
+        <td>${location}</td>
+        <td>${coordinates}</td>
+        <td><button class="button" onclick="deleteOffer(this)">Delete</button></td>
+      `;
+
+      // Clear input fields
+      document.getElementById('itemName').value = '';
+      document.getElementById('sellerName').value = '';
+      document.getElementById('price').value = '';
+      document.getElementById('location').value = '';
+      document.getElementById('coordinates').value = '';
+    }
+
+    function deleteOffer(button) {
+      const row = button.parentNode.parentNode;
+      row.parentNode.removeChild(row);
+    }
+  </script>
+</body>
+</html>
