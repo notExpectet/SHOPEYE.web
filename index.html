@@ -1,102 +1,59 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
   <meta charset="UTF-8">
+  <title>ShopEye - Angebote</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ShopEye</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #070B1B;
-      color: #D1D6F2;
-      margin: 0;
-      padding: 0;
-    }
-
-    h1 {
-      text-align: center;
-      margin-top: 20px;
-    }
-
-    table {
-      width: 90%;
-      margin: 20px auto;
-      border-collapse: collapse;
-      border-radius: 8px;
-      overflow: hidden;
-      background-color: #2542D0;
-    }
-
-    th, td {
-      padding: 12px;
-      text-align: left;
-    }
-
-    th {
-      background-color: #1A308F;
-      font-weight: bold;
-    }
-
-    td {
-      border-bottom: 1px solid #D1D6F2;
-    }
-
-    tr:last-child td {
-      border-bottom: none;
-    }
-
-    input, button {
-      display: block;
-      width: 90%;
-      margin: 10px auto;
-      padding: 10px;
-      font-size: 16px;
-      border-radius: 8px;
-      border: none;
-      background-color: #2542D0;
-      color: #D1D6F2;
-    }
-
-    button:hover {
-      background-color: #1A308F;
-      cursor: pointer;
-    }
-  </style>
+  <!-- Google Fonts: Inter -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+  <!-- Externe CSS-Datei einbinden -->
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h1>ShopEye - Marktplatz</h1>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Artikel</th>
-        <th>Preis</th>
-        <th>Menge</th>
-        <th>Verkäufer</th>
-        <th>Koordinaten</th>
-      </tr>
-    </thead>
-    <tbody id="table-body">
-      <!-- Daten werden hier dynamisch eingefügt -->
-    </tbody>
-  </table>
-
-  <h2 style="text-align: center;">Neues Angebot hinzufügen</h2>
-  <form id="add-offer-form">
-    <input type="text" id="item-name" placeholder="Artikelname" required>
-    <input type="number" id="price" placeholder="Preis" required>
-    <input type="number" id="amount" placeholder="Menge" required>
-    <input type="text" id="seller" placeholder="Verkäufername" required>
-    <input type="text" id="coordinates" placeholder="Koordinaten (z.B. 100,64,200)" required>
-    <button type="submit">Angebot hinzufügen</button>
-  </form>
-
+  <header class="main-header">
+    <nav>
+      <div class="container">
+        <div class="search-container">
+          <form class="search-form">
+            <input type="text" placeholder="Angebote suchen..." class="search-input">
+            <button type="submit" class="search-button">
+              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              </svg>
+            </button>
+          </form>
+        </div>
+      </div>
+    </nav>
+  </header>
+  
+  <main class="main-content">
+    <div class="container">
+      <h1 class="current-offer-title">Aktuelle Angebote</h1>
+      
+      <!-- Angebotskarten werden hier dynamisch eingefügt -->
+      <div class="cards-grid" id="cards-grid">
+        <!-- Firebase-Daten -->
+      </div>
+      
+      <!-- Formular zum Hinzufügen eines neuen Angebots -->
+      <form id="add-offer-form" class="offer-form">
+        <h2>Neues Angebot hinzufügen</h2>
+        <input type="text" id="item-name" placeholder="Artikelname" required>
+        <input type="number" id="price" placeholder="Preis" required>
+        <input type="number" id="amount" placeholder="Menge" required>
+        <input type="text" id="seller" placeholder="Verkäufername" required>
+        <input type="text" id="coordinates" placeholder="Koordinaten (z.B. 100,64,200)" required>
+        <button type="submit">Angebot hinzufügen</button>
+      </form>
+    </div>
+  </main>
+  
+  <!-- Firebase-Integration -->
   <script type="module">
-    // Import Firebase SDKs
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js";
     import { getDatabase, ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-database.js";
-
-    // Firebase-Konfiguration
+    
     const firebaseConfig = {
       apiKey: "AIzaSyCNvhdtrIfpUMX2a-uzi2l-a968gj77igY",
       authDomain: "shopeye-95c07.firebaseapp.com",
@@ -107,38 +64,42 @@
       appId: "1:379955108962:web:185dc36ce9aa427d08853b",
       measurementId: "G-3XP6GZQTJH"
     };
-
-    // Firebase initialisieren
+    
     const app = initializeApp(firebaseConfig);
     const database = getDatabase(app);
-
-    // Daten aus Firebase abrufen und Tabelle aktualisieren
-    const tableBody = document.getElementById("table-body");
-
+    
+    const cardsGrid = document.getElementById("cards-grid");
+    
     function fetchOffers() {
       const offersRef = ref(database, 'offers/');
       onValue(offersRef, (snapshot) => {
         const offers = snapshot.val();
-        tableBody.innerHTML = ""; // Tabelle leeren
+        cardsGrid.innerHTML = "";
         for (const offerId in offers) {
           const offer = offers[offerId];
-          const row = `
-            <tr>
-              <td>${offer.itemName}</td>
-              <td>${offer.price}</td>
-              <td>${offer.amount}</td>
-              <td>${offer.seller}</td>
-              <td>${offer.coordinates}</td>
-            </tr>
+          const card = document.createElement("article");
+          card.className = "offer-card";
+          card.innerHTML = `
+            <div class="card-content">
+              <h3 class="card-title">${offer.itemName}</h3>
+              <p class="card-description">
+                Menge: ${offer.amount}<br>
+                Verkäufer: ${offer.seller}<br>
+                Koordinaten: ${offer.coordinates}
+              </p>
+              <div class="card-footer">
+                <span class="price">€${offer.price}</span>
+                <button class="details-button">Details</button>
+              </div>
+            </div>
           `;
-          tableBody.innerHTML += row;
+          cardsGrid.appendChild(card);
         }
       });
     }
-
+    
     fetchOffers();
-
-    // Neues Angebot hinzufügen
+    
     const addOfferForm = document.getElementById("add-offer-form");
     addOfferForm.addEventListener("submit", (event) => {
       event.preventDefault();
@@ -147,10 +108,10 @@
       const amount = parseInt(document.getElementById("amount").value, 10);
       const seller = document.getElementById("seller").value;
       const coordinates = document.getElementById("coordinates").value;
-
+      
       const offersRef = ref(database, 'offers/');
       const newOfferRef = push(offersRef);
-
+      
       set(newOfferRef, {
         itemName,
         price,
