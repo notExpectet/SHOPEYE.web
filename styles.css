@@ -1,217 +1,294 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-  <meta charset="UTF-8">
-  <title>ShopEye - Angebote</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Google Fonts: Inter -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
-  <!-- Externe CSS-Datei einbinden -->
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-  <header class="main-header">
-    <nav>
-      <div class="container">
-        <div class="search-container">
-          <form class="search-form">
-            <input type="text" placeholder="Angebote suchen..." class="search-input">
-            <button type="submit" class="search-button">
-              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-              </svg>
-            </button>
-          </form>
-        </div>
-      </div>
-    </nav>
-    <!-- Plus-Icon oben rechts -->
-    <button id="open-modal-button" class="open-modal-button" title="Neues Angebot erstellen">
-      <svg class="icon icon-plus" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <line x1="12" y1="5" x2="12" y2="19"></line>
-        <line x1="5" y1="12" x2="19" y2="12"></line>
-      </svg>
-    </button>
-  </header>
-  
-  <main class="main-content">
-    <div class="container">
-      <h1 class="current-offer-title">Aktuelle Angebote</h1>
-      
-      <!-- Angebotskarten werden hier dynamisch eingefügt -->
-      <div class="cards-grid" id="cards-grid"></div>
-    </div>
-  </main>
-  
-  <!-- Modal-Popup für neues Angebot -->
-  <div id="offer-modal" class="modal">
-    <div class="modal-content">
-      <span class="close-button" id="close-modal-button" title="Schließen">&times;</span>
-      <h2>Neues Angebot hinzufügen</h2>
-      <form id="add-offer-form" class="offer-form">
-        <input type="text" id="item-name" placeholder="Artikelname" required>
-        <input type="number" id="price" placeholder="Gesamtpreis (als Zahl)" required>
-        <input type="number" id="amount" placeholder="Menge" required>
-        <input type="text" id="shop-name" placeholder="Shopname" required>
-        <input type="number" id="rating" placeholder="Shopbewertung (1-5)" min="1" max="5" required>
-        <input type="text" id="seller" placeholder="Verkäufername" required>
-        <input type="text" id="coordinates" placeholder="Koordinaten (z.B. 100,64,200)" required>
-        <button type="submit">Angebot hinzufügen</button>
-      </form>
-    </div>
-  </div>
-  
-  <!-- Firebase-Integration und dynamisches Erzeugen der Karten -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js";
-    import { getDatabase, ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-database.js";
-    
-    const firebaseConfig = {
-      apiKey: "AIzaSyCNvhdtrIfpUMX2a-uzi2l-a968gj77igY",
-      authDomain: "shopeye-95c07.firebaseapp.com",
-      databaseURL: "https://shopeye-95c07-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "shopeye-95c07",
-      storageBucket: "shopeye-95c07.firebasestorage.app",
-      messagingSenderId: "379955108962",
-      appId: "1:379955108962:web:185dc36ce9aa427d08853b",
-      measurementId: "G-3XP6GZQTJH"
-    };
-    
-    const app = initializeApp(firebaseConfig);
-    const database = getDatabase(app);
-    
-    // Simulierter aktuell angemeldeter Benutzer (bitte ersetze das durch dein Authentifizierungssystem)
-    const currentUserId = "demo-user";
-    const cardsGrid = document.getElementById("cards-grid");
-    
-    // Hilfsfunktion, um die Bewertung als Sterne darzustellen
-    function getStars(rating) {
-      let stars = '';
-      for (let i = 0; i < 5; i++) {
-        stars += i < rating ? '★' : '☆';
-      }
-      return stars;
-    }
-    
-    function fetchOffers() {
-      const offersRef = ref(database, 'offers/');
-      onValue(offersRef, (snapshot) => {
-        const offers = snapshot.val();
-        cardsGrid.innerHTML = "";
-        for (const offerId in offers) {
-          const offer = offers[offerId];
-          // Verkaufspreis = Gesamtpreis / Menge
-          const verkaufspreis = offer.amount > 0 ? (offer.price / offer.amount).toFixed(2) : '0';
-          // Kaufpreis = 90% des Verkaufspreises
-          const kaufpreis = offer.amount > 0 ? ((offer.price / offer.amount) * 0.9).toFixed(2) : '0';
-          
-          const card = document.createElement("article");
-          card.className = "offer-card";
-          card.innerHTML = `
-            <div class="card-header">
-              <div class="prices">
-                <span class="verkaufspreis">${verkaufspreis}</span>
-                <span class="kaufpreis">${kaufpreis}</span>
-              </div>
-            </div>
-            <div class="card-body">
-              <div class="shop-details">
-                <div class="shop-info">
-                  <svg class="icon icon-shop" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path d="M3 9l9-6 9 6v10a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-4H9v4a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V9z"></path>
-                  </svg>
-                  <h3 class="shop-name">${offer.shopName || "Unbekannter Shop"}</h3>
-                </div>
-                <div class="shop-rating">${getStars(offer.rating)}</div>
-              </div>
-              <div class="seller-details">
-                <svg class="icon icon-seller" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <circle cx="12" cy="7" r="4"></circle>
-                  <path d="M5.5 21a8.38 8.38 0 0 1 13 0"></path>
-                </svg>
-                <p class="seller-name">${offer.seller}</p>
-              </div>
-            </div>
-            <div class="card-footer">
-              <div class="card-actions">
-                <span class="edit-icon" title="Bearbeiten" style="display: none;">
-                  <svg class="icon icon-edit" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 20h9"></path>
-                    <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path>
-                  </svg>
-                </span>
-                <span class="delete-icon" title="Löschen" style="display: none;">
-                  <svg class="icon icon-delete" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path d="M19 7l-.867 12.142A2 2 0 0 1 16.138 21H7.862a2 2 0 0 1-1.995-1.858L5 7"></path>
-                    <path d="M10 11v6"></path>
-                    <path d="M14 11v6"></path>
-                    <path d="M5 7h14"></path>
-                    <path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"></path>
-                  </svg>
-                </span>
-              </div>
-            </div>
-          `;
-          
-          // Icons nur anzeigen, wenn der aktuelle Benutzer der Ersteller ist
-          if (offer.creatorId === currentUserId) {
-            card.querySelector('.edit-icon').style.display = "inline-block";
-            card.querySelector('.delete-icon').style.display = "inline-block";
-          }
-          
-          cardsGrid.appendChild(card);
-        }
-      });
-    }
-    
-    fetchOffers();
-    
-    // Öffnen/Schließen des Modal-Popups
-    const modal = document.getElementById("offer-modal");
-    const openModalButton = document.getElementById("open-modal-button");
-    const closeModalButton = document.getElementById("close-modal-button");
-    
-    openModalButton.addEventListener("click", () => {
-      modal.style.display = "flex";
-    });
-    
-    closeModalButton.addEventListener("click", () => {
-      modal.style.display = "none";
-    });
-    
-    // Formular zum Hinzufügen eines neuen Angebots
-    const addOfferForm = document.getElementById("add-offer-form");
-    addOfferForm.addEventListener("submit", (event) => {
-      event.preventDefault();
-      const itemName = document.getElementById("item-name").value;
-      const price = parseFloat(document.getElementById("price").value);
-      const amount = parseInt(document.getElementById("amount").value, 10);
-      const shopName = document.getElementById("shop-name").value;
-      const rating = parseInt(document.getElementById("rating").value, 10);
-      const seller = document.getElementById("seller").value;
-      const coordinates = document.getElementById("coordinates").value;
-      
-      const offersRef = ref(database, 'offers/');
-      const newOfferRef = push(offersRef);
-      
-      set(newOfferRef, {
-        itemName,
-        price,
-        amount,
-        shopName,
-        rating,
-        seller,
-        coordinates,
-        creatorId: currentUserId
-      }).then(() => {
-        addOfferForm.reset();
-        modal.style.display = "none";
-        alert("Angebot erfolgreich hinzugefügt!");
-      }).catch((error) => {
-        console.error("Fehler beim Hinzufügen des Angebots:", error);
-      });
-    });
-  </script>
-</body>
-</html>
+:root {
+  --accent-color: #52525b;         /* Dunkles Grau als Akzent */
+  --background-dark: #121212;        /* Haupt-Hintergrund */
+  --card-background: #1e1e1e;        /* Kartenhintergrund */
+  --text-light: #f8fafc;             /* Helle Schriftfarbe */
+  --border-radius: 12px;
+  --transition: all 0.2s ease-in-out;
+}
+
+/* Grundlegende Resets */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--background-dark);
+  color: var(--text-light);
+  line-height: 1.6;
+}
+
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* Header & Suche */
+.main-header {
+  background-color: var(--card-background);
+  padding: 1rem 0;
+  position: relative;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.search-container {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.search-form {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.75rem 1.25rem;
+  background: #2a2a2a;
+  border: 2px solid #2a2a2a;
+  border-radius: var(--border-radius);
+  color: var(--text-light);
+  transition: var(--transition);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  background: #1e1e1e;
+}
+
+.search-button {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--accent-color);
+  cursor: pointer;
+}
+
+/* Plus-Icon zum Öffnen des Formular-Modals */
+.open-modal-button {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: var(--accent-color);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+.open-modal-button:hover {
+  background: #6b7280;
+}
+
+/* Überschrift */
+.current-offer-title {
+  text-align: center;
+  font-size: 2.5rem;
+  font-weight: 600;
+  margin: 3rem 0;
+}
+
+/* Karten-Grid */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  margin: 2rem 0;
+}
+
+/* Angebotskarte */
+.offer-card {
+  background: var(--card-background);
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  transition: var(--transition);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.offer-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+}
+
+/* Aufteilung in Header, Body & Footer */
+.card-header,
+.card-body,
+.card-footer {
+  padding: 0.5rem 0;
+}
+.card-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+}
+.card-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: right;
+  padding-top: 0.5rem;
+}
+
+/* Preise */
+.prices {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+.verkaufspreis {
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+.kaufpreis {
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: var(--accent-color);
+  align-self: flex-end;
+}
+
+/* Card Body: Shop- & Verkäuferinfos */
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.shop-details {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  padding: 0 1rem;
+}
+.shop-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.shop-name {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+.shop-rating {
+  font-size: 1rem;
+  color: var(--accent-color);
+  margin-left: 1rem;
+}
+.seller-details {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 1rem;
+}
+.seller-name {
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+/* Icons */
+.icon {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Aktionen */
+.card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+.edit-icon,
+.delete-icon {
+  cursor: pointer;
+}
+
+/* Modal (Popup) */
+.modal {
+  display: none; /* standardmäßig versteckt */
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0,0,0,0.5);
+  align-items: center;
+  justify-content: center;
+}
+.modal-content {
+  background: var(--card-background);
+  padding: 1.5rem;
+  border-radius: var(--border-radius);
+  width: 90%;
+  max-width: 600px;
+  position: relative;
+}
+.close-button {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.75rem;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+/* Formular */
+.offer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.offer-form input,
+.offer-form button {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 1rem;
+  background-color: #2a2a2a;
+  color: var(--text-light);
+  transition: var(--transition);
+}
+.offer-form input:focus,
+.offer-form button:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px var(--accent-color);
+}
+.offer-form button {
+  background-color: var(--accent-color);
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+}
+.offer-form button:hover {
+  background-color: #6b7280;
+}
+
+/* Responsive Anpassungen */
+@media (max-width: 1024px) {
+  .cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 768px) {
+  .container {
+    padding: 0 1rem;
+  }
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
+  .current-offer-title {
+    font-size: 2rem;
+  }
+}
